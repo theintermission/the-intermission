@@ -1,0 +1,37 @@
+{
+  "name": "the-intermission",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Intermission — a moment of calm in a busy world. Daily briefing for your Kindle.",
+  "scripts": {
+    "briefing": "tsx src/pipeline.ts",
+    "briefing:dry": "tsx src/pipeline.ts --dry",
+    "gmail:auth": "tsx scripts/gmail-auth.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@fontsource/eb-garamond": "^5.1.0",
+    "@fontsource/fraunces": "^5.1.0",
+    "@react-pdf/renderer": "^4.1.0",
+    "dotenv": "^16.4.0",
+    "googleapis": "^144.0.0",
+    "html-to-text": "^10.0.0",
+    "jszip": "^3.10.1",
+    "nodemailer": "^6.9.0",
+    "react": "^18.3.0",
+    "rss-parser": "^3.13.0",
+    "sharp": "^0.35.0"
+  },
+  "devDependencies": {
+    "@types/html-to-text": "^9.0.4",
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^6.4.0",
+    "@types/react": "^18.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

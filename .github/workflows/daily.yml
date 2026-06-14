@@ -1,0 +1,56 @@
+name: The Intermission — daily edition
+
+on:
+  schedule:
+    # 04:30 UTC = 05:30 London in summer (BST), 04:30 in winter (GMT).
+    # GitHub cron is UTC-only and doesn't understand DST — pick your poison:
+    # either accept the 1-hour winter shift, or run two schedules and
+    # guard in the script. For most people the shift is fine.
+    - cron: "37 4 * * *"
+  workflow_dispatch: {} # allows manual "Run workflow" button for testing
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write   # needed to commit run state (.seen-articles.json) back
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate and deliver briefing
+        run: npm run briefing
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+
+      # Persist run state back to the repo so it survives to tomorrow.
+      # GitHub wipes the container each run, so without this the dedupe
+      # memory (.seen-articles.json) and the Interlude no-repeat history
+      # (.interlude-history.json) would reset every day and stop working.
+      - name: Save run state
+        if: success()
+        run: |
+          git config user.name "The Intermission Bot"
+          git config user.email "actions@github.com"
+          git add -f .seen-articles.json .interlude-history.json 2>/dev/null || true
+          if ! git diff --staged --quiet; then
+            git commit -m "Update run state [skip ci]"
+            git push
+          else
+            echo "No state changes to commit."
+          fi
+
+      # If the pipeline fails, the workflow fails, and GitHub emails you.
+      # That's your alerting system. Free.
