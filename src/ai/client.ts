@@ -13,5 +13,5 @@ export const anthropic = new Anthropic({
 // Haiku is for cheap per-item summaries; Sonnet for the final synthesis.
 export const MODELS = {
   SUMMARIZE: "claude-haiku-4-5-20251001",
-  SYNTHESIZE: "claude-sonnet-4-6",
+  SYNTHESIZE: "claude-opus-4-8",
 } as const;
