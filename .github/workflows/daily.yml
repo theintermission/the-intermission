@@ -6,7 +6,7 @@ on:
     # GitHub cron is UTC-only and doesn't understand DST — pick your poison:
     # either accept the 1-hour winter shift, or run two schedules and
     # guard in the script. For most people the shift is fine.
-    - cron: "37 4 * * *"
+    - cron: "03 0 * * *"
   workflow_dispatch: {} # allows manual "Run workflow" button for testing
 
 jobs:

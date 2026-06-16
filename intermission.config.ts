@@ -86,6 +86,7 @@ export const config: IntermissionConfig = {
     { name: "The Verge", url: "https://www.theverge.com/rss/index.xml" },
     { name: "Wired", url: "https://www.wired.com/feed/rss" },
     { name: "Nautilus", url: "https://nautil.us/feed/"},
+    { name: "Neuroscience News", url: "http://neurosciencenews.com/feed/"},
   ],
 
   newsFeeds: [
@@ -97,7 +98,8 @@ export const config: IntermissionConfig = {
 
   verbatimFeeds: [
     { name: "Big Technology", url: "https://www.bigtechnology.com/feed" },
-    { name: "Aeon", url: "https://aeon.co/feed" },
+    { name: "Nesslabs", url: "https://nesslabs.com/feed" },
+    { name: "Sunday Wisdom", url: "https://coffeeandjunk.substack.com/feed" },
   ],
 
   gmail: {
