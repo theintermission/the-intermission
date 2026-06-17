@@ -114,7 +114,7 @@ Now produce today's issue as JSON.`;
 
   const response = await anthropic.messages.create({
     model: MODELS.SYNTHESIZE,
-    max_tokens: 8000,
+    max_tokens: 16000,
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: userMessage }],
   });
@@ -124,8 +124,7 @@ Now produce today's issue as JSON.`;
     .map((block) => (block.type === "text" ? block.text : ""))
     .join("");
 
-  const cleaned = text.replace(/```json|```/g, "").trim();
-  const parsed = JSON.parse(cleaned) as {
+  const parsed = extractJson(text) as {
     title: string;
     sections: BriefingSections;
   };
@@ -136,4 +135,60 @@ Now produce today's issue as JSON.`;
     inputTokens: response.usage.input_tokens,
     outputTokens: response.usage.output_tokens,
   };
+}
+
+/**
+ * Robustly extract a JSON object from a model response.
+ *
+ * Models occasionally wrap JSON in ```` ```json ```` fences, or add a stray
+ * sentence before or after it. A naive JSON.parse() on the whole string
+ * then crashes with "Unexpected non-whitespace character after JSON".
+ *
+ * This finds the first balanced top-level {...} object and parses only that,
+ * ignoring anything before or after. It respects braces inside strings and
+ * escaped quotes so it doesn't miscount.
+ */
+function extractJson(raw: string): unknown {
+  // Strip code fences first (common, harmless)
+  const text = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+  const start = text.indexOf("{");
+  if (start === -1) {
+    throw new Error("No JSON object found in model response");
+  }
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === "{") {
+      depth++;
+    } else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        // Found the matching close of the first top-level object.
+        const candidate = text.slice(start, i + 1);
+        return JSON.parse(candidate);
+      }
+    }
+  }
+
+  // If we get here the object never closed — surface a clear error.
+  throw new Error("Incomplete JSON object in model response (no matching closing brace)");
 }
