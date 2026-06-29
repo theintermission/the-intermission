@@ -66,7 +66,7 @@ export type IntermissionConfig = {
 };
 
 export const config: IntermissionConfig = {
-  kindleEmail: "jimmy.felstead_xRNbuA@kindle.com", // ← CHANGE ME
+  kindleEmail: "jimmy.felstead_2p7ixI@kindle.com", // ← CHANGE ME
 
   timezone: "Europe/London",
 
