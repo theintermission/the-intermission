@@ -54,7 +54,6 @@ Your editorial voice:
 - Substance over speculation
 - Plain English, no jargon, no buzzwords
 - No marketing language ("game-changer", "revolutionary", "breaking")
-- avoid using AI buzzwords like "quiet"
 - First-person plural sparingly ("we") — feels like a trusted weekly columnist
 - Treat the reader as intelligent
 
@@ -161,20 +160,48 @@ function extractJson(raw: string): unknown {
   let depth = 0;
   let inString = false;
   let escaped = false;
+  // Build a cleaned copy as we walk, rather than just slicing the original.
+  // This lets us fix illegal raw control characters (unescaped newlines,
+  // tabs, carriage returns) that models occasionally leave inside string
+  // values — valid-looking prose, but not valid JSON. JSON.parse rejects
+  // these outright ("Bad control character in string literal"), so we
+  // escape them here instead of trusting the model's raw output.
+  let out = "";
 
   for (let i = start; i < text.length; i++) {
     const ch = text[i];
+    const code = text.charCodeAt(i);
 
     if (inString) {
       if (escaped) {
         escaped = false;
-      } else if (ch === "\\") {
-        escaped = true;
-      } else if (ch === '"') {
-        inString = false;
+        out += ch;
+        continue;
       }
+      if (ch === "\\") {
+        escaped = true;
+        out += ch;
+        continue;
+      }
+      if (ch === '"') {
+        inString = false;
+        out += ch;
+        continue;
+      }
+      // Any raw control character (0x00–0x1F) inside a string is illegal
+      // JSON. Escape the common ones properly; drop anything stranger.
+      if (code < 0x20) {
+        if (ch === "\n") out += "\\n";
+        else if (ch === "\r") out += "\\r";
+        else if (ch === "\t") out += "\\t";
+        // else: silently drop other stray control bytes
+        continue;
+      }
+      out += ch;
       continue;
     }
+
+    out += ch;
 
     if (ch === '"') {
       inString = true;
@@ -184,8 +211,7 @@ function extractJson(raw: string): unknown {
       depth--;
       if (depth === 0) {
         // Found the matching close of the first top-level object.
-        const candidate = text.slice(start, i + 1);
-        return JSON.parse(candidate);
+        return JSON.parse(out);
       }
     }
   }
